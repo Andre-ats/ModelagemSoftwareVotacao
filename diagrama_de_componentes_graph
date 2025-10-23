@@ -1,0 +1,74 @@
+graph TB
+    subgraph "Sistema de Votação Eletrônica - UE"
+        subgraph "Camada de Interface"
+            IAdmin["<<interface>><br/>Interface Administrador<br/>(UEg)"]
+            IEleitor["<<interface>><br/>Interface Eleitor<br/>(UEv)"]
+        end
+        
+        subgraph "Camada de Lógica de Negócio"
+            subgraph "Componentes UEg"
+                CompGerenciador["<<component>><br/>Gerenciador UEg"]
+                CompCadastroUEv["<<component>><br/>Cadastro UEv"]
+                CompCadastroCandidato["<<component>><br/>Cadastro Candidatos"]
+                CompValidacao["<<component>><br/>Validação"]
+                CompRelatorio["<<component>><br/>Gerador de Relatórios"]
+                CompApuracao["<<component>><br/>Apuração"]
+            end
+            
+            subgraph "Componentes UEv"
+                CompVotacao["<<component>><br/>Controle de Votação"]
+                CompAutenticacao["<<component>><br/>Autenticação Eleitor"]
+                CompConfirmacao["<<component>><br/>Confirmação Voto"]
+                CompRegistro["<<component>><br/>Registro de Voto"]
+            end
+            
+            subgraph "Componentes Compartilhados"
+                CompComunicacao["<<component>><br/>Comunicação<br/>UEg-UEv"]
+                CompSeguranca["<<component>><br/>Segurança e<br/>Criptografia"]
+            end
+        end
+        
+        subgraph "Camada de Dados"
+            BDGerenciamento[("<<database>><br/>BD Gerenciamento<br/>(UEv, Candidatos,<br/>Eleitores, Resultados)")]
+            BDVotacao[("<<database>><br/>BD Local UEv<br/>(Votos, Eleitores,<br/>Candidatos)")]
+        end
+    end
+    
+    %% Conexões Interface -> Negócio
+    IAdmin --> CompGerenciador
+    IEleitor --> CompVotacao
+    
+    %% Conexões Negócio UEg
+    CompGerenciador --> CompCadastroUEv
+    CompGerenciador --> CompCadastroCandidato
+    CompGerenciador --> CompValidacao
+    CompGerenciador --> CompRelatorio
+    CompGerenciador --> CompApuracao
+    
+    %% Conexões Negócio UEv
+    CompVotacao --> CompAutenticacao
+    CompVotacao --> CompConfirmacao
+    CompVotacao --> CompRegistro
+    
+    %% Conexões Negócio -> Dados
+    CompCadastroUEv --> BDGerenciamento
+    CompCadastroCandidato --> BDGerenciamento
+    CompValidacao --> BDGerenciamento
+    CompApuracao --> BDGerenciamento
+    CompRelatorio --> BDGerenciamento
+    
+    CompAutenticacao --> BDVotacao
+    CompConfirmacao --> BDVotacao
+    CompRegistro --> BDVotacao
+    
+    %% Comunicação entre UEg e UEv
+    CompGerenciador -.->|"<<usa>>"| CompComunicacao
+    CompRegistro -.->|"<<usa>>"| CompComunicacao
+    CompComunicacao -.->|"Carga inicial<br/>Envio de votos"| BDVotacao
+    CompComunicacao -.->|"Sincroniza dados<br/>Recebe votos"| BDGerenciamento
+    
+    %% Segurança
+    CompSeguranca -.->|"<<protege>>"| CompComunicacao
+    CompSeguranca -.->|"<<protege>>"| CompAutenticacao
+    CompSeguranca -.->|"<<protege>>"| BDGerenciamento
+    CompSeguranca -.->|"<<protege>>"| BDVotacao
